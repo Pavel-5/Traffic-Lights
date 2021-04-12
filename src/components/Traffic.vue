@@ -17,6 +17,7 @@ export default {
       isYellow: false,
       isGreen: false,
       countRed: null,
+      countYellow: null,
       countGreen: null,
       nextColor: "",
       indexSetTimeout: null,
@@ -24,10 +25,57 @@ export default {
   },
   methods: {
     timer(color, count) {
-      if (color === "green") {
+      if (color === "yellowToRed") {
+        if (count > 1) {
+          this.indexSetTimeout = setTimeout(() => {
+            this.countYellow--;
+
+            sessionStorage.setItem("countYellow", this.countYellow);
+
+            this.timer(color, --count);
+          }, 1000);
+        } else {
+          this.indexSetTimeout = setTimeout(() => {
+            this.nextColor = "yellow";
+            this.countYellow = null;
+
+            sessionStorage.setItem("nextColor", this.nextColor);
+            sessionStorage.setItem("countYellow", this.countYellow);
+
+            this.$router.push({ path: "/red" });
+
+            this.indexSetTimeout = null;
+          }, 1000);
+        }
+      } else if (color === "yellowToGreen") {
+        if (count > 1) {
+          this.indexSetTimeout = setTimeout(() => {
+            this.countYellow--;
+
+            sessionStorage.setItem("countYellow", this.countYellow);
+
+            this.timer(color, --count);
+          }, 1000);
+        } else {
+          this.indexSetTimeout = setTimeout(() => {
+            this.nextColor = "yellow";
+            this.countYellow = null;
+
+            sessionStorage.setItem("nextColor", this.nextColor);
+            sessionStorage.setItem("countYellow", this.countYellow);
+
+            this.$router.push({ path: "/green" });
+
+            this.indexSetTimeout = null;
+          }, 1000);
+        }
+      } else if (color === "green") {
         if (count > 4) {
           this.indexSetTimeout = setTimeout(() => {
             this.countGreen--;
+
+            sessionStorage.setItem("countGreen", this.countGreen);
+
             this.timer(color, --count);
           }, 1000);
         } else {
@@ -36,18 +84,27 @@ export default {
               this.countGreen = null;
               this.isGreen = !this.isGreen;
               this.nextColor = "red";
+
+              sessionStorage.setItem("nextColor", this.nextColor);
+              sessionStorage.setItem("countGreen", this.countGreen);
+
               this.$router.push({ path: "/yellow" });
+
               this.indexSetTimeout = null;
             }, 1000);
           } else if (count % 2 === 1) {
             this.indexSetTimeout = setTimeout(() => {
               this.isGreen = !this.isGreen;
+
               this.timer(color, --count);
             }, 300);
           } else if (count % 2 === 0) {
             this.indexSetTimeout = setTimeout(() => {
               this.countGreen--;
               this.isGreen = !this.isGreen;
+
+              sessionStorage.setItem("countGreen", this.countGreen);
+
               this.timer(color, --count);
             }, 700);
           }
@@ -56,6 +113,9 @@ export default {
         if (count > 1)
           this.indexSetTimeout = setTimeout(() => {
             this.countRed--;
+
+            sessionStorage.setItem("countRed", this.countRed);
+
             this.timer(color, --count);
           }, 1000);
         else {
@@ -63,7 +123,12 @@ export default {
             this.countRed = null;
             this.isRed = !this.isRed;
             this.nextColor = "green";
+
+            sessionStorage.setItem("nextColor", this.nextColor);
+            sessionStorage.setItem("countRed", this.countRed);
+
             this.$router.push({ path: "/yellow" });
+
             this.indexSetTimeout = null;
           }, 1000);
         }
@@ -71,30 +136,45 @@ export default {
     },
 
     changeСolor() {
-      if (this.nextColor === "red")
-        this.indexSetTimeout = setTimeout(() => {
-          this.nextColor = "yellow";
-          this.$router.push({ path: "/red" });
-          this.indexSetTimeout = null;
-        }, 3000);
-      else if (this.nextColor === "yellow") {
+      if (this.nextColor === "red") {
+        this.countYellow = sessionStorage.getItem("countYellow")
+          ? sessionStorage.getItem("countYellow")
+          : 3;
+
+        sessionStorage.removeItem("countRed");
+        sessionStorage.removeItem("countGreen");
+
+        this.timer("yellowToRed", this.countYellow);
+      } else if (this.nextColor === "yellow") {
         if (this.color === "green") {
-          this.countGreen = 15;
-          this.indexSetTimeout = setTimeout(() => {
-            this.timer("green", this.countGreen + 1);
-          }, 1000);
+          this.countGreen = sessionStorage.getItem("countGreen")
+            ? sessionStorage.getItem("countGreen")
+            : 15;
+
+          sessionStorage.removeItem("countRed");
+          sessionStorage.removeItem("countYellow");
+
+          this.timer("green", Number(this.countGreen) + 1);
         } else {
-          this.countRed = 10;
-          this.indexSetTimeout = setTimeout(() => {
-            this.timer("red", this.countRed);
-          }, 1000);
+          this.countRed = sessionStorage.getItem("countRed")
+            ? sessionStorage.getItem("countRed")
+            : 10;
+
+          sessionStorage.removeItem("countYellow");
+          sessionStorage.removeItem("countGreen");
+
+          this.timer("red", this.countRed);
         }
-      } else if (this.nextColor === "green")
-        this.indexSetTimeout = setTimeout(() => {
-          this.nextColor = "yellow";
-          this.$router.push({ path: "/green" });
-          this.indexSetTimeout = null;
-        }, 3000);
+      } else if (this.nextColor === "green") {
+        this.countYellow = sessionStorage.getItem("countYellow")
+          ? sessionStorage.getItem("countYellow")
+          : 3;
+
+        sessionStorage.removeItem("countRed");
+        sessionStorage.removeItem("countGreen");
+
+        this.timer("yellowToGreen", this.countYellow);
+      }
     },
 
     setColor() {
@@ -124,7 +204,9 @@ export default {
     },
   },
   mounted() {
-    this.nextColor = "yellow";
+    this.nextColor = sessionStorage.getItem("nextColor")
+      ? sessionStorage.getItem("nextColor")
+      : "yellow";
 
     this.setColor();
     this.changeСolor();
